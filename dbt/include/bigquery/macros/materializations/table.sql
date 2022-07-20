@@ -1,5 +1,5 @@
 {% materialization table, adapter='bigquery' -%}
-  
+
   {%- set language = config.get('language') -%}
   {%- set identifier = model['alias'] -%}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
