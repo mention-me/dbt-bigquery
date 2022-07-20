@@ -215,33 +215,6 @@ class BigQueryAdapter(BaseAdapter):
             return False
         return True
 
-    @available.parse_none
-    def submit_python_job(self, parsed_model: dict, compiled_code: str):
-        schema = getattr(parsed_model, "schema", self.config.credentials.schema)
-        database = getattr(parsed_model, "database", self.config.credentials.database)
-        identifier = parsed_model["alias"]
-        proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
-        packages = ["snowflake-snowpark-python"] + parsed_model["config"].get("packages", [])
-        packages = "', '".join(packages)
-        python_stored_procedure = f"""
-CREATE OR REPLACE PROCEDURE {proc_name} ()
-RETURNS STRING
-LANGUAGE PYTHON
-RUNTIME_VERSION = '3.8' -- TODO: should this be configurable?
-PACKAGES = ('{packages}')
-HANDLER = 'main'
-EXECUTE AS CALLER
-AS
-$$
-{compiled_code}
-
-$$;
-        """
-        self.execute(python_stored_procedure, auto_begin=False, fetch=False)
-        response, _ = self.execute(f"CALL {proc_name}()", auto_begin=False, fetch=False)
-        self.execute(f"drop procedure if exists {proc_name}(string)")
-        return response
-
     def get_columns_in_relation(self, relation: BigQueryRelation) -> List[BigQueryColumn]:
         try:
             table = self.connections.get_bq_table(
