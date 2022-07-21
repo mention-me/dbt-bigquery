@@ -46,6 +46,12 @@
         )
       {%- endset -%}
 
+      {# Because we're putting the model SQL _directly_ into the MERGE statement,
+         we need to prepend the MERGE statement with the user-configured sql_header,
+         which may be needed to resolve that model SQL (e.g. referencing a variable or UDF in the header)
+         in the "dynamic" case, we save the model SQL result as a temp table first, wherein the
+         sql_header is included by the create_table_as macro.
+      #}
       {{ config.set('include_sql_header', true) }}
       {{ get_insert_overwrite_merge_sql(target_relation, source_sql, dest_columns, [predicate]) }}
       {{ config.set('include_sql_header', false) }}
